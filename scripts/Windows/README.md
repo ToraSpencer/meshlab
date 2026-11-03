@@ -27,3 +27,13 @@ Libraries installed by the `0_setup_env.sh` are the following:
 	- `cmake`
 	- `ninja`
 	- `nsis` (for package stage)
+
+## Fork-specific: configure only
+
+`configure.ps1` runs only the CMake configure step with the Visual Studio 2022 generator; it does not compile anything. Run it from the repository root:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Windows\configure.ps1
+```
+
+The generated solution is `build\MeshLab.sln`. Pass `-QtDir <path>` if Qt is not installed at `%USERPROFILE%\Qt\5.15.2\msvc2019_64`.
