@@ -29,7 +29,11 @@ if(WIN32)
 	add_definitions(-DNOMINMAX)
 	if(MSVC)
 		add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
-		add_compile_options(/bigobj)
+		# Sources are UTF-8. Without /utf-8 MSVC decodes them with the system ANSI
+		# code page (e.g. CP936 on Chinese Windows), which makes non-ASCII string
+		# literals fail to compile (C2001 in rich_parameter_list_frame.cpp) and
+		# turns C4819 into an error in libraries built with /WX (lib3mf).
+		add_compile_options(/bigobj /utf-8)
 	endif()
 endif()
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
