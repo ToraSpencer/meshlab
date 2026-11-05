@@ -33,6 +33,13 @@ if (TARGET XercesC::XercesC)
 			if (APPLE)
 				set(E57_BUILD_SHARED OFF)
 			endif()
+			# libE57Format enables link-time optimization in Release. The /GL objects
+			# produced by MSVC make "cmake -E __create_def" crash (CMake 3.30) while
+			# generating the export list of the shared E57Format library, so keep LTO
+			# off on Windows.
+			if (WIN32)
+				set(E57_RELEASE_LTO OFF)
+			endif()
 			add_subdirectory(${LIBE57_DIR} EXCLUDE_FROM_ALL)
 			unset(MESSAGE_QUIET)
 

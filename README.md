@@ -76,7 +76,7 @@ aqt install-qt windows desktop 5.15.2 win64_msvc2019_64 -O "$env:USERPROFILE\Qt"
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Windows\configure.ps1
 ```
 
-脚本只执行 CMake 配置，不编译，产物为 `build\MeshLab.sln`。它会优先使用 VS2022 自带的 CMake，避免系统 CMake 4.x 与旧依赖不兼容。默认使用 `%USERPROFILE%\Qt\5.15.2\msvc2019_64`，Qt 在其他位置时加 `-QtDir <路径>`。首次配置会联网下载 `src/external/downloads` 下的第三方库；若子模块未初始化，脚本会自动执行 `git submodule update --init --recursive`。
+脚本只执行 CMake 配置，不编译，产物为 `build\MeshLab.sln`。它会优先使用 VS2022 自带的 CMake，避免系统 CMake 4.x 与旧依赖不兼容（系统 CMake 3.x 可用，本仓库已在 3.30.0 上验证）。默认使用 `%USERPROFILE%\Qt\5.15.2\msvc2019_64`，Qt 在其他位置时加 `-QtDir <路径>`。首次配置会联网下载 `src/external/downloads` 下的第三方库；若子模块未初始化，脚本会自动执行 `git submodule update --init --recursive`。
 
 ### 3.4. 编译与运行
 
@@ -97,6 +97,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Windows\configure.
 | 找不到 Qt5 | 确认安装的是 Qt 5.15 的 MSVC 2019 64-bit 组件；或传 `-QtDir` 指向实际目录 |
 | 找不到 vcglib 头文件 | 执行 `git submodule update --init --recursive` |
 | 配置阶段下载失败 | 检查网络与代理后重跑脚本，已下载内容会保留 |
+| 编译报 `C2001 常量中有换行符`，或 `lib3mf` 报 `C2220`（警告 C4819 被视为错误） | 系统 ANSI 代码页不是 UTF-8（如中文 Windows 的 CP936）。仓库已在 MSVC 下全局加 `/utf-8`；从上游同步后若该选项丢失，手动执行 CMake 配置时补 `-DCMAKE_CXX_FLAGS=/utf-8`（`configure.ps1` 不转发额外的 `-D` 参数） |
+| 构建 `E57Format` 时 `cmake -E __create_def` 崩溃（退出码 `-1073741819`） | libE57Format 默认开启 Release LTO，其 `/GL` 对象会让 CMake 3.30 的导出符号生成器崩溃；`src/external/e57.cmake` 已在 Windows 下关闭 `E57_RELEASE_LTO` |
 | 启动时缺少 Qt DLL | 按 3.4 节配置 `PATH` 或运行 `windeployqt` |
 
 ## 4. 分支与 Pull Request
