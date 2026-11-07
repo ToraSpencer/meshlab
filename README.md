@@ -9,6 +9,7 @@
 - 个人开发分支：`develop_tora`
 - 同步分支：`main`（仅跟随官方 `main`，不提交定制代码）
 - 官方原始 README 保留在 [README_ori.md](README_ori.md)
+- 个人定制：已彻底移除主视图的视觉轨迹球（含 View → Show Trackball 菜单项、`Shift+H` 快捷键及启动显示逻辑），相机轨迹球交互不受影响。
 
 ## 本文目录
 
@@ -20,6 +21,10 @@
   - [3.3. 生成 VS 工程](#33-生成-vs-工程)
   - [3.4. 编译与运行](#34-编译与运行)
   - [3.5. 常见问题](#35-常见问题)
+  - [3.6. 制作 Windows 安装包](#36-制作-windows-安装包)
+    - [3.6.1. 首次准备（只需一次）](#361-首次准备只需一次)
+    - [3.6.2. 每次发版流程](#362-每次发版流程)
+    - [3.6.3. 安装包行为与已知限制](#363-安装包行为与已知限制)
 - [4. 分支与 Pull Request](#4-分支与-pull-request)
 - [5. 从上游同步到开发分支](#5-从上游同步到开发分支)
   - [5.1. 更新 main](#51-更新-main)
@@ -110,6 +115,57 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Windows\configure.
 | E57Format 链接阶段报 `MSB3073` 或 `__create_def` 错误 | 传入 `-DE57_RELEASE_LTO=OFF` 后重新配置；旧构建目录需重新运行 `configure.ps1` 刷新缓存 |
 | 生成时出现 `'pwsh.exe' 不是内部或外部命令` | 来自 vcpkg 的 applocal 步骤，可忽略；彻底消除需禁用 vcpkg 用户级集成 |
 | 启动时缺少 Qt DLL | 按 3.4 节配置 `PATH` 或运行 `windeployqt` |
+
+### 3.6. 制作 Windows 安装包
+
+修改源码后重新生成可分发的安装包，复用上游的 NSIS 打包脚本（`scripts/Windows/internal/2a_portable.sh`、`2c_installer.sh`），在 Git Bash 中执行。
+
+#### 3.6.1. 首次准备（只需一次）
+
+1. 安装 NSIS：
+
+```powershell
+winget install --id NSIS.NSIS -e
+```
+
+2. 把 VC++ 运行库下载到 `install\`（安装器会在目标机器上静默安装它）：
+
+```powershell
+curl.exe -L -o install\vc_redist.x64.exe https://aka.ms/vs/17/release/vc_redist.x64.exe
+```
+
+#### 3.6.2. 每次发版流程
+
+1. **决定是否升版本号**：版本号来自仓库根目录的 `ML_VERSION`（单行、无换行，当前为 `2025.07`）。要发给别人时建议改成新版本，否则新旧安装包同名。修改后必须重新运行 `configure.ps1`，因为版本号在 CMake 配置阶段读入并编译进 `meshlab.exe`。
+2. **重新编译**：仅改源码时，用 VS 打开 `build\MeshLab.sln`，选择 `Release | x64`，生成 `INSTALL` 目标；改了 `CMakeLists.txt` 或增删文件时，先运行 `scripts\Windows\configure.ps1` 再生成。若删除或重命名了插件，建议先清空 `install\` 再生成，避免旧 DLL 残留被打进安装包。
+3. **部署 Qt 与资源**：
+
+```bash
+export PATH="/c/Users/<用户名>/Qt/5.15.2/msvc2019_64/bin:$PATH"
+bash scripts/Windows/internal/2a_portable.sh
+```
+
+脚本会执行 `windeployqt`、拷贝 `LICENSE.txt`/`privacy.txt`、清理 `.lib`。`IFX*` 相关的两条报错可忽略——当前构建没有该产物，脚本会继续执行；`vc_redist.x64.exe` 已存在时不会重复下载。
+
+4. **生成安装包**（`makensis` 需在 `PATH` 中）：
+
+```bash
+export PATH="/c/Program Files (x86)/NSIS:$PATH"
+bash scripts/Windows/internal/2c_installer.sh
+```
+
+产物为 `packages\MeshLab<版本>-windows_x86_64.exe`。`packages\` 中的旧安装包不会被自动删除，分发前确认文件名与版本一致。
+
+5. **验收**：至少在本机走一遍“安装 → 启动 → 新建空工程确认无轨迹球 → 卸载”；条件允许时，再找一台没有安装 Qt/VS 的干净 Windows 复测一次。
+6. **分发**：只需发送 `packages\MeshLab<版本>-windows_x86_64.exe` 一个文件，Qt、插件和 VC++ 运行库都已包含；安装器会自动卸载目标机器上的旧版 MeshLab。
+
+#### 3.6.3. 安装包行为与已知限制
+
+- 安装器清单请求 `requireAdministrator`，双击会弹 UAC；默认安装到 `C:\Program Files\VCG\MeshLab`，卸载项出现在“应用和功能”。
+- 安装器检测到旧版 MeshLab 时会先静默卸载旧版。若在受限 Job Object 中运行（例如部分 CI 或代理环境），该步骤可能因 `CREATE_BREAKAWAY_FROM_JOB` 失败而卡住；此时先手动运行旧版 `uninstall.exe /S`，再安装新包。
+- 安装包未做代码签名，首次运行会触发 SmartScreen“Windows 已保护你的电脑”，需点“更多信息 → 仍要运行”。
+- 按 GPL 分发修改版时，必须同时提供对应源码（本仓库或其发布页链接）。
+- 当前 `install\` 约 175 MB，LZMA 压缩后的安装包约 54 MB。
 
 ## 4. 分支与 Pull Request
 
