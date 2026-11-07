@@ -207,7 +207,6 @@ private slots:
 	void fullScreen();
 	void showToolbarFile();
 	void showInfoPane();
-	void showTrackBall();
 	void resetTrackBall();
 	void showLayerDlg(bool visible);
 	void showRaster();
@@ -452,7 +451,6 @@ private:
 	QAction* fullScreenAct;
 	QAction* showToolbarStandardAct;
 	QAction* showInfoPaneAct;
-	QAction* showTrackBallAct;
 	QAction* resetTrackBallAct;
 	QAction* showLayerDlgAct;
 	QAction* showRasterAct;

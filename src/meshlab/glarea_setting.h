@@ -70,8 +70,6 @@ public:
 	inline static QString pointSizeParam() {return "MeshLab::Appearance::pointSize";}
 	bool wheelDirection;
 	inline static QString wheelDirectionParam() {return "MeshLab::Appearance::wheelDirection";}
-	bool startupShowTrackball;
-	inline static QString showTrackballParam() {return "MeshLab::Appearance::showTrackball";}
 	int matrixDecimalPrecision;
 	inline static QString matrixDecimalPrecisionParam() {return "MeshLab::Appearance::matrixDecimalPrecision";}
 

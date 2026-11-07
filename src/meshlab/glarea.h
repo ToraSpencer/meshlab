@@ -173,9 +173,7 @@ public:
 
     bool isCurrent() { if (mvc() == NULL) return false;return mvc()->currentId == this->id;}
 
-    void showTrackBall(bool b)		{trackBallVisible = b; update();}
     bool isHelpVisible()      {return helpVisible;}
-    bool isTrackBallVisible()		{return trackBallVisible;}
     bool isDefaultTrackBall()   {return activeDefaultTrackball;}
     void saveSnapshot();
     void toggleHelpVisible()      {helpVisible = !helpVisible; update();}
@@ -437,7 +435,6 @@ private:
     void setTiledView(GLdouble fovY, float viewRatio, float fAspect, GLdouble zNear, GLdouble zFar, float cameraDist);
 
     bool helpVisible;				// Help on screen
-    bool trackBallVisible;		// Draws the trackball ?
     bool activeDefaultTrackball; // keep track on active trackball
     //bool hasToUpdateTexture;			// has to reload textures at the next redraw
     bool hasToPick;							// has to pick during the next redraw.

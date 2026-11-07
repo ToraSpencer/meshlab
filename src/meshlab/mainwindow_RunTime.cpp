@@ -339,7 +339,6 @@ void MainWindow::updateMenus()
 	updateMenuItems(renderMenu,activeDoc);
 	fullScreenAct->setEnabled(activeDoc);
 	showLayerDlgAct->setEnabled(activeDoc);
-	showTrackBallAct->setEnabled(activeDoc);
 	resetTrackBallAct->setEnabled(activeDoc);
 	showInfoPaneAct->setEnabled(activeDoc);
 	windowsMenu->setEnabled(activeDoc);
@@ -376,8 +375,7 @@ void MainWindow::updateMenus()
 		}
 		
 		showInfoPaneAct->setChecked(GLA()->infoAreaVisible);
-		showTrackBallAct->setChecked(GLA()->isTrackBallVisible());
-		
+
 		// Decorator Menu Checking and unChecking
 		// First uncheck and disable all the decorators
 		for (DecoratePlugin* dp : PM.decoratePluginIterator()){
@@ -2523,12 +2521,6 @@ void MainWindow::showInfoPane()
 		GLA()->infoAreaVisible = !(GLA()->infoAreaVisible);
 		GLA()->update();
 	}
-}
-
-void MainWindow::showTrackBall()
-{
-	if(GLA() != 0)
-		GLA()->showTrackBall(!GLA()->isTrackBallVisible());
 }
 
 void MainWindow::resetTrackBall()

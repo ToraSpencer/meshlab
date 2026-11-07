@@ -287,11 +287,6 @@ connectRenderModeActionList(rendlist);*/
 	connect(showInfoPaneAct, SIGNAL(triggered()), this, SLOT(showInfoPane()));
 
 
-	showTrackBallAct = new QAction(tr("Show &Trackball"), this);
-	showTrackBallAct->setCheckable(true);
-	showTrackBallAct->setShortcut(Qt::SHIFT + Qt::Key_H);
-	connect(showTrackBallAct, SIGNAL(triggered()), this, SLOT(showTrackBall()));
-
 	resetTrackBallAct = new QAction(tr("Reset &Trackball"), this);
 	resetTrackBallAct->setShortcutContext(Qt::ApplicationShortcut);
 #if defined(Q_OS_MAC)
@@ -608,7 +603,6 @@ void MainWindow::createMenus()
 	viewMenu->addAction(showLayerDlgAct);
 	viewMenu->addAction(showRasterAct);
 	viewMenu->addSeparator();
-	viewMenu->addAction(showTrackBallAct);
 	viewMenu->addAction(resetTrackBallAct);
 	viewMenu->addSeparator();
 	viewMenu->addAction(toggleOrthoAct);

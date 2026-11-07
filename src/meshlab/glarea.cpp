@@ -72,7 +72,6 @@ GLArea::GLArea(QWidget *parent, MultiViewer_Container *mvcont, RichParameterList
     takeSnapTile=false;
     activeDefaultTrackball=true;
     infoAreaVisible = true;
-    trackBallVisible = glas.startupShowTrackball;
     currentShader = NULL;
     lastFilterRef = NULL;
     //lastEditRef = NULL;
@@ -565,9 +564,6 @@ void GLArea::paintEvent(QPaintEvent* /*event*/)
     } ///end if busy
 
     glPopMatrix(); // We restore the state to immediately after the trackball (and before the bbox scaling/translating)
-
-    if(trackBallVisible && !takeSnapTile && !(iEdit && !suspendedEditor))
-        trackball.DrawPostApply();
 
     foreach(QAction * p, iPerDocDecoratorlist)
     {
