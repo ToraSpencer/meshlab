@@ -76,7 +76,15 @@ aqt install-qt windows desktop 5.15.2 win64_msvc2019_64 -O "$env:USERPROFILE\Qt"
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Windows\configure.ps1
 ```
 
-脚本只执行 CMake 配置，不编译，产物为 `build\MeshLab.sln`。它会优先使用 VS2022 自带的 CMake，避免系统 CMake 4.x 与旧依赖不兼容。默认使用 `%USERPROFILE%\Qt\5.15.2\msvc2019_64`，Qt 在其他位置时加 `-QtDir <路径>`。首次配置会联网下载 `src/external/downloads` 下的第三方库；若子模块未初始化，脚本会自动执行 `git submodule update --init --recursive`。
+脚本只执行 CMake 配置，不编译，产物为 `build\MeshLab.sln`。它通过 `vswhere -latest` 选择最新安装的 Visual Studio 自带 CMake；找不到时回退到 `PATH` 中的 `cmake`。默认使用 `%USERPROFILE%\Qt\5.15.2\msvc2019_64`，Qt 在其他位置时加 `-QtDir <路径>`。首次配置会联网下载 `src/external/downloads` 下的第三方库；若子模块未初始化，脚本会自动执行 `git submodule update --init --recursive`。
+
+脚本还会自动传入以下在 Windows 上验证过的兼容参数，避免常见编译失败：
+
+- `/utf-8`：避免中文 Windows（ANSI 代码页 936）下第三方源码触发 C4819，进而被 `/WX` 升级为 C2220；
+- `-DHAVE_GETTIMEOFDAY=0`：MSVC 没有 `gettimeofday`，同时避免 vcpkg 用户级 MSBuild 集成让 CMake 的探测误判为可用；
+- `-DE57_RELEASE_LTO=OFF`：libE57Format 的 `/GL` 目标文件无法被 `cmake -E __create_def` 解析，关闭该库的 LTO 后才能正常导出符号。
+
+配置期间脚本会设置 `VcpkgEnabled=false`，只影响本次 CMake 进程，不会修改用户级 vcpkg 配置。
 
 ### 3.4. 编译与运行
 
@@ -97,6 +105,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Windows\configure.
 | 找不到 Qt5 | 确认安装的是 Qt 5.15 的 MSVC 2019 64-bit 组件；或传 `-QtDir` 指向实际目录 |
 | 找不到 vcglib 头文件 | 执行 `git submodule update --init --recursive` |
 | 配置阶段下载失败 | 检查网络与代理后重跑脚本，已下载内容会保留 |
+| 编译 lib3mf 时出现 C4819 或 C2220 | 用 `configure.ps1` 重新配置（已加 `/utf-8`）；手动配置时需自行传入相同的编译选项 |
+| xerces 报 C3861 找不到 `gettimeofday` | 传入 `-DHAVE_GETTIMEOFDAY=0` 后重新配置；确认 `build\src\external\downloads\xerces-c-3.2.4\config.h` 中该宏为 `#undef` |
+| E57Format 链接阶段报 `MSB3073` 或 `__create_def` 错误 | 传入 `-DE57_RELEASE_LTO=OFF` 后重新配置；旧构建目录需重新运行 `configure.ps1` 刷新缓存 |
+| 生成时出现 `'pwsh.exe' 不是内部或外部命令` | 来自 vcpkg 的 applocal 步骤，可忽略；彻底消除需禁用 vcpkg 用户级集成 |
 | 启动时缺少 Qt DLL | 按 3.4 节配置 `PATH` 或运行 `windeployqt` |
 
 ## 4. 分支与 Pull Request

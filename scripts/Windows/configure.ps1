@@ -63,12 +63,29 @@ if (-not $cmake) {
     throw 'cmake was not found. Install Visual Studio 2022 with the C++ workload, or install CMake 3.18+ and add it to PATH.'
 }
 
+# The user-wide vcpkg MSBuild integration makes CMake's try_compile link all
+# installed vcpkg libraries, which can make POSIX functions look available on
+# Windows. Disable it for this configure process only.
+$env:VcpkgEnabled = 'false'
+$env:VCPkgLocalAppDataDisabled = 'true'
+
 Write-Host "Using CMake: $cmake"
 Write-Host "Generating Visual Studio 2022 solution in '$BuildDir'..."
+# Compatibility options validated on Windows:
+#   /utf-8                 third-party sources under a non-UTF-8 ANSI code page
+#                          (e.g. Chinese Windows, CP936) otherwise raise C4819
+#   -DHAVE_GETTIMEOFDAY=0  MSVC has no gettimeofday; prevents a false-positive
+#                          CMake probe when vcpkg libraries provide one
+#   -DE57_RELEASE_LTO=OFF  libE57Format's /GL objects cannot be parsed by
+#                          `cmake -E __create_def` with auto-export enabled
 & $cmake -S $RepoRoot -B $BuildDir `
     -G 'Visual Studio 17 2022' -A x64 `
     "-DCMAKE_PREFIX_PATH=$QtDir" `
-    "-DCMAKE_INSTALL_PREFIX=$(Join-Path $RepoRoot 'install')"
+    "-DCMAKE_INSTALL_PREFIX=$(Join-Path $RepoRoot 'install')" `
+    '-DCMAKE_C_FLAGS=/DWIN32 /D_WINDOWS /utf-8' `
+    '-DCMAKE_CXX_FLAGS=/DWIN32 /D_WINDOWS /GR /EHsc /utf-8' `
+    '-DHAVE_GETTIMEOFDAY=0' `
+    '-DE57_RELEASE_LTO=OFF'
 if ($LASTEXITCODE -ne 0) {
     throw "CMake configuration failed (exit code $LASTEXITCODE)."
 }
