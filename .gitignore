@@ -1,4 +1,5 @@
 ## MeshLab GitIgnore ##
+*.pdf
 *.ipch
 *.pdb
 *.sdf
