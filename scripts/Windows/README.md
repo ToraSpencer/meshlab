@@ -37,3 +37,13 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Windows\configure.
 ```
 
 The generated solution is `build\MeshLab.sln`. Pass `-QtDir <path>` if Qt is not installed at `%USERPROFILE%\Qt\5.15.2\msvc2019_64`.
+
+## Fork-specific: one-command installer build
+
+`build_installer.ps1` runs the whole pipeline: CMake configure, the `INSTALL` target in `Release | x64`, Qt and runtime file deployment, then NSIS packaging. Run it from the repository root:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Windows\build_installer.ps1
+```
+
+The installer is written to `packages\MeshLab<version>-windows_x86_64.exe`. Pass `-QtDir <path>` when Qt is not at `%USERPROFILE%\Qt\5.15.2\msvc2019_64`, and `-Makensis <path>` when NSIS is not detected automatically. NSIS is still required; the VC++ redistributable is downloaded automatically when `install\vc_redist.x64.exe` is missing.

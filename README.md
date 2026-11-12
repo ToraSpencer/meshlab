@@ -118,7 +118,15 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Windows\configure.
 
 ### 3.6. 制作 Windows 安装包
 
-修改源码后重新生成可分发的安装包，复用上游的 NSIS 打包脚本（`scripts/Windows/internal/2a_portable.sh`、`2c_installer.sh`），在 Git Bash 中执行。
+修改源码后，在仓库根目录执行一键脚本即可生成安装包（CMake 配置 → `Release | x64` 的 `INSTALL` 目标 → Qt/资源部署 → NSIS 打包）：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Windows\build_installer.ps1
+```
+
+产物为 `packages\MeshLab<版本>-windows_x86_64.exe`。Qt 不在默认路径时加 `-QtDir <路径>`；`makensis` 不在 `PATH` 时会自动在 NSIS 默认安装目录查找。版本号仍从 `ML_VERSION` 读取，脚本每次都会重新配置 CMake，改完版本号直接重跑即可。
+
+下面的手工步骤与脚本等价，复用上游的 NSIS 打包脚本（`scripts/Windows/internal/2a_portable.sh`、`2c_installer.sh`），便于排查问题或只重做其中某一步。
 
 #### 3.6.1. 首次准备（只需一次）
 
